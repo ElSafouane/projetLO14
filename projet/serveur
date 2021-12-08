@@ -1,0 +1,134 @@
+#! /bin/bash
+
+# Ce script implémente un serveur.  
+# Le script doit être invoqué avec l'argument :                                                              
+# PORT   le port sur lequel le serveur attend ses clients  
+
+if [ $# -ne 1 ]; then
+    echo "usage: $(basename $0) PORT"
+    exit -1
+fi
+
+PORT="$1"
+
+# Déclaration du tube
+
+FIFO="/tmp/$USER-fifo-$$"
+
+# Il faut détruire le tube quand le serveur termine pour éviter de
+# polluer /tmp.  On utilise pour cela une instruction trap pour être sur de
+# nettoyer même si le serveur est interrompu par un signal.
+
+function nettoyage() { rm -f "$FIFO"; }
+trap nettoyage EXIT #QUand on va quitter le server il va y avoir un exit qui est envoyé et le trap quand il verra le exit il va executer nettoyage
+
+#trap fonction EXIT: des que le programme execute EXIT
+
+# on crée le tube nommé
+
+[ -e "FIFO" ] || mkfifo "$FIFO"
+
+
+function accept-loop() {
+    while true; do
+	interaction < "$FIFO" | netcat -l -p "$PORT" > "$FIFO"
+    done
+}
+
+# La fonction interaction lit les commandes du client sur entrée standard 
+# et envoie les réponses sur sa sortie standard. 
+#
+# 	CMD arg1 arg2 ... argn                   
+#                     
+# alors elle invoque la fonction :
+#                                                                            
+#         commande-CMD arg1 arg2 ... argn                                      
+#                                                                              
+# si elle existe; sinon elle envoie une réponse d'erreur.                     
+
+function interaction() {
+    local cmd args
+    while true; do
+	read cmd args || exit -1
+	fun="commande-$cmd"
+	if [ "$(type -t $fun)" = "function" ]; then 
+	#Si la chaine de caractere est bien une fonction préalablement définie
+	    $fun $args
+	else
+	    commande-non-comprise $fun $args
+	fi
+    done
+}
+
+# Les fonctions implémentant les différentes commandes du serveur
+
+
+function commande-non-comprise () {
+   echo "Le serveur ne peut pas interpréter cette commande"
+}
+
+# On accepte et traite les connexions
+
+function commande-echo () {
+
+	if [ $args="bonjour" ];then
+	
+		echo "Bonjour, je suis à votre service"
+	else
+		echo "TU veux quoi"
+	fi
+
+	}
+
+
+function commande-convert () {
+	echo $args | tr [a-z] [A-Z]
+}
+
+function commande-convert2 () {
+	echo $* | awk'{print toupper($0)}'
+}
+
+function commande-extinction () {
+	sleep 10
+	shutdown -r
+}
+
+function commande-touch () {
+	if [ -f $1 ];then
+		echo "dsl fichier deja exitant"
+	else
+		touch $1
+		echo blabla > $1
+	fi
+	}
+
+function commande-vsh () {
+	
+	if [ $# -ne 0 ];then
+		if [ "$1" = "-list" ];then
+			echo "bv t'as compris"
+			ls=$(ls archive)
+			if [ -n "$ls" ];then
+				echo "Les archives existantes sont: $ls"
+			else
+				echo "Pas d'archive dans ce serveur"
+			fi
+		else
+			echo "pas du tout"
+		fi
+	else
+		echo "Rentre une commande"
+	fi
+}
+
+function commande-cat () {
+	cat $1
+
+}
+
+function commande-pwd () {
+	pwd $1
+
+}
+accept-loop
