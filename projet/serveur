@@ -46,11 +46,22 @@ function accept-loop() {
 #                                                                              
 # si elle existe; sinon elle envoie une réponse d'erreur.                     
 
+modeBrowse=false
+
 function interaction() {
     local cmd args
     while true; do
 	read cmd args || exit -1
+	
 	fun="commande-$cmd"
+	if $modeBrowse;then
+		echo "Oui bien joué"
+		fun="browse-$cmd"
+		if [ "$cmd" = "exit" ];then
+			modeBrowse=false
+			fun="commande-$cmd"
+		fi
+	fi
 	if [ "$(type -t $fun)" = "function" ]; then 
 	#Si la chaine de caractere est bien une fonction préalablement définie
 	    $fun $args
@@ -107,19 +118,28 @@ function commande-vsh () {
 	
 	if [ $# -ne 0 ];then
 		if [ "$1" = "-list" ];then
-			echo "bv t'as compris"
-			ls=$(ls archive)
+			ls=$(ls ~/projet/archive)
 			if [ -n "$ls" ];then
-				echo "Les archives existantes sont: $ls"
+				echo -e "Les archives existantes sont:\n\n$ls"
 			else
 				echo "Pas d'archive dans ce serveur"
 			fi
-		else
-			echo "pas du tout"
+		elif [ "$1" = "-browse" ];then
+			modeBrowse=true
+			printf "vsh:>"
 		fi
+			
 	else
 		echo "Rentre une commande"
 	fi
+}
+
+function commande-browse () {
+	if  [ "$0"="pwd" ];then
+		pwd
+
+	fi
+
 }
 
 function commande-cat () {
