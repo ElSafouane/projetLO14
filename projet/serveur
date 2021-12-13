@@ -127,12 +127,47 @@ function commande-vsh () {
 		elif [ "$1" = "-browse" ];then
 			modeBrowse=true
 			printf "vsh:>"
-		fi
+		elif [ "$1" = "-create" ]; then
 			
+			
+			for i in $(ls $(pwd)/archive)
+			do
+				if [ -d $i ]; then
+					echo "Directory: $(pwd)/$i/"
+					"rechercheDossier"
+
+				fi
+				set -- $(ls -l | grep $i)
+				
+				echo $9 $1 $5
+
+	
+			done
+
+
+
+
+		fi
+		
 	else
 		echo "Rentre une commande"
 	fi
 }
+
+function rechercheDossier () { 
+	for i in $(ls)
+	do
+		echo "Directory: $(pwd)/$i"
+		set --$(ls -l | grep $i)
+		echo $9 $1 $5
+
+	done
+
+
+}
+
+
+
 
 function commande-browse () {
 	if  [ "$0"="pwd" ];then
@@ -151,4 +186,17 @@ function commande-pwd () {
 	pwd $1
 
 }
+
+
+function browse-ls () {
+	ls -l
+
+}
+
+
+function browse-pwd () {
+	pwd
+}
+
+
 accept-loop
