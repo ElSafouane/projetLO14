@@ -120,12 +120,12 @@ function commande-vsh () {
 		if [ "$1" = "-list" ];then
 			ls=$(ls ~/projet/archive)
 			if [ -n "$ls" ];then
-				echo -e "Les archives existantes sont:\n\n$ls"
+				echo -e "\nLes archives existantes sont:\n\n$ls"
 			else
 				echo "Pas d'archive dans ce serveur"
 			fi
 		elif [ "$1" = "-browse" ];then
-			modeBrowse=true
+			modeBrowse=true	
 			printf "vsh:>"
 		elif [ "$1" = "-create" ]; then
 			
