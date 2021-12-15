@@ -9,6 +9,7 @@ if [ $# -ne 1 ]; then
     exit -1
 fi
 
+
 PORT="$1"
 
 # Déclaration du tube
@@ -31,7 +32,7 @@ trap nettoyage EXIT #QUand on va quitter le server il va y avoir un exit qui est
 
 function accept-loop() {
     while true; do
-	interaction < "$FIFO" | netcat -l -p "$PORT" > "$FIFO"
+	interaction < "$FIFO" | netcat -kl -p "$PORT" > "$FIFO"
     done
 }
 
@@ -75,6 +76,7 @@ function interaction() {
 
 
 function commande-non-comprise () {
+	echo $mode
    echo "Le serveur ne peut pas interpréter cette commande"
 }
 
@@ -114,45 +116,62 @@ function commande-touch () {
 	fi
 	}
 
-function commande-vsh () {
-	
-	if [ $# -ne 0 ];then
-		if [ "$1" = "-list" ];then
-			ls=$(ls ~/projet/archive)
-			if [ -n "$ls" ];then
-				echo -e "\nLes archives existantes sont:\n\n$ls"
-			else
-				echo "Pas d'archive dans ce serveur"
-			fi
-		elif [ "$1" = "-browse" ];then
-			modeBrowse=true	
-			printf "vsh:>"
-		elif [ "$1" = "-create" ]; then
-			
-			
-			for i in $(ls $(pwd)/archive)
-			do
-				if [ -d $i ]; then
-					echo "Directory: $(pwd)/$i/"
-					"rechercheDossier"
-
-				fi
-				set -- $(ls -l | grep $i)
-				
-				echo $9 $1 $5
-
-	
-			done
-
-
-
-
-		fi
-		
+function commande-list () {
+	ls=$(ls ~/projet/archive)
+	if [ -n "$ls" ]; then
+		echo -e "\nLes archives existantes sont: \n\n$ls"
 	else
-		echo "Rentre une commande"
+		echo "Pas d'archive dans ce serveur"
 	fi
+	echo $cmd
 }
+
+function commande-create () {
+	echo "create"
+	echo $cmd
+}
+
+
+#function commande-vsh () {
+#	
+#	if [ $# -ne 0 ];then
+#		if [ "$mode" = "-list" ];then
+#			ls=$(ls ~/projet/archive)
+#			if [ -n "$ls" ];then
+#				echo -e "\nLes archives existantes sont:\n\n$ls"
+#			else
+#				echo "Pas d'archive dans ce serveur"
+#			fi
+#			
+#		elif [ "$1" = "-browse" ];then
+#			modeBrowse=true	
+#			echo -n "vsh:>"
+#
+#		elif [ "$1" = "-create" ]; then
+#				
+#			for i in $(ls $(pwd)/archive)
+#			do
+#				if [ -d $i ]; then
+#					echo "Directory: $(pwd)/$i/"
+#					"rechercheDossier"
+#
+#				fi
+#				set -- $(ls -l | grep $i)
+#				
+#				echo $9 $1 $5
+#	
+#			done
+#
+#
+#		fi
+#		
+#	else
+#		echo "Rentre une commande"
+#	fi
+#}
+#
+
+
 
 function rechercheDossier () { 
 	for i in $(ls)
@@ -169,13 +188,7 @@ function rechercheDossier () {
 
 
 
-function commande-browse () {
-	if  [ "$0"="pwd" ];then
-		pwd
-
-	fi
-
-}
+repCourant="/"
 
 function commande-cat () {
 	cat $1
@@ -195,7 +208,7 @@ function browse-ls () {
 
 
 function browse-pwd () {
-	pwd
+	echo $repCourant
 }
 
 

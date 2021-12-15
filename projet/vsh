@@ -1,0 +1,22 @@
+#! /bin/bash
+
+#vsh
+
+#Script coté client, il engagera la connexion avec le serveur
+
+
+#On déclare les variables globales générales à toutes les commandes
+declare -r mode=$1
+declare -r NOM_SERV=$2
+declare -r PORT=$3
+declare -r ARCHIVE=$4
+
+
+if [[ -z $NOM_SERV || -z $PORT ]];then
+	echo "Veuillez rentrer un nom de serveur et un port"
+
+else
+	
+	 echo ${mode:1} | nc -w1 $NOM_SERV $PORT
+fi
+
