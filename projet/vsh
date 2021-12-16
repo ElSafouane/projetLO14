@@ -16,7 +16,23 @@ if [[ -z $NOM_SERV || -z $PORT ]];then
 	echo "Veuillez rentrer un nom de serveur et un port"
 
 else
+	if [ "$mode" = "-create" ];then
+		echo "Je suis rentré"
+		for i in $(ls $(pwd))
+			do
+				if [ -d $i ]; then
+					echo "Directory: $(pwd)/$i/"
+				fi
+				set -- $(ls -l | grep $i)
+				
+				echo $9 $1 $5
+
+		done > $ARCHIVE
+		echo ${mode:1} $ARCHIVE $(cat $ARCHIVE) | nc -w1 $NOM_SERV $PORT
+	elif [ "$mode" = "-list" ];then
+		echo ${mode:1} | nc -w1 $NOM_SERV $PORT
+	fi
 	
-	 echo ${mode:1} | nc -w1 $NOM_SERV $PORT
+	 
 fi
 

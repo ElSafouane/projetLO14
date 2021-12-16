@@ -50,10 +50,9 @@ function accept-loop() {
 modeBrowse=false
 
 function interaction() {
-    local cmd args
+    local cmd args arg1
     while true; do
-	read cmd args || exit -1
-	
+	read cmd args arg1 || exit -1
 	fun="commande-$cmd"
 	if $modeBrowse;then
 		echo "Oui bien joué"
@@ -65,13 +64,13 @@ function interaction() {
 	fi
 	if [ "$(type -t $fun)" = "function" ]; then 
 	#Si la chaine de caractere est bien une fonction préalablement définie
-	    $fun $args
+		$fun $args
 	else
 	    commande-non-comprise $fun $args
 	fi
     done
 }
-
+echo $nomArchive $contenuArchive
 # Les fonctions implémentant les différentes commandes du serveur
 
 
@@ -117,6 +116,7 @@ function commande-touch () {
 	}
 
 function commande-list () {
+
 	ls=$(ls ~/projet/archive)
 	if [ -n "$ls" ]; then
 		echo -e "\nLes archives existantes sont: \n\n$ls"
@@ -127,8 +127,20 @@ function commande-list () {
 }
 
 function commande-create () {
-	echo "create"
+
+	#cmd contiens le mode
 	echo $cmd
+
+	#args contient le nom de l'archive
+	echo -e "$args je suis args\n\n\n\n\n"
+
+	#arg1 contient le path du directory je sais pas pourquoi
+	echo -e "$arg1 JE suis arg1\n\n\n\n\n"
+
+	#arg2 contient le contenu du fichier
+
+	mv $args $(pwd)/archive/$args
+	
 }
 
 
@@ -169,7 +181,6 @@ function commande-create () {
 #		echo "Rentre une commande"
 #	fi
 #}
-#
 
 
 
