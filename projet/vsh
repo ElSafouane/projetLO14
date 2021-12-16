@@ -17,17 +17,30 @@ if [[ -z $NOM_SERV || -z $PORT ]];then
 
 else
 	if [ "$mode" = "-create" ];then
-		echo "Je suis rentré"
-		for i in $(ls $(pwd))
+		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
+			while read ligne 
 			do
-				if [ -d $i ]; then
-					echo "Directory: $(pwd)/$i/"
-				fi
-				set -- $(ls -l | grep $i)
-				
-				echo $9 $1 $5
 
-		done > $ARCHIVE
+				set -- $ligne
+				echo "$9 Je suis le 9"
+				echo "$ligne Je suis la ligne"
+				 
+				echo "Je suis dans le while"
+				if [ "$9" != "$ARCHIVE" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
+						if [ -d $9 ]; then #Si c'est un répertoire
+							echo "je suis un répertoire"
+							rep=$9 #On enregistre le nom du répertoire afin d'afficher par la suite son arborescence
+							echo "Directory: $(pwd)" >> $ARCHIVE
+						fi						
+					echo $9 $1 $5 >> $ARCHIVE
+				fi
+				if [[ "$ligne" = "" ]]; then #si la ligne de ls -Rl est vide cela signifie qu'on passe au répertoire suivant
+					echo "Je suis dans le if ligne vide"
+					echo "@" >> $ARCHIVE
+					echo "Directory: $(pwd)/$rep" >> $ARCHIVE #donc on affiche le nom du répertoire et son fullpath
+				fi
+
+			done < "listeFich"			
 		echo ${mode:1} $ARCHIVE $(cat $ARCHIVE) | nc -w1 $NOM_SERV $PORT
 	elif [ "$mode" = "-list" ];then
 		echo ${mode:1} | nc -w1 $NOM_SERV $PORT
