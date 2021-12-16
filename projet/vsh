@@ -30,7 +30,7 @@ else
 						if [ -d $9 ]; then #Si c'est un répertoire
 							echo "je suis un répertoire"
 							rep=$9 #On enregistre le nom du répertoire afin d'afficher par la suite son arborescence
-							echo "Directory: $(pwd)" >> $ARCHIVE
+							echo "Directory: $(pwd)" >> $temp_header
 						fi						
 					echo $9 $1 $5 >> $temp_header
 				fi
