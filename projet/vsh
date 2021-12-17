@@ -18,34 +18,41 @@ if [[ -z $NOM_SERV || -z $PORT ]];then
 else
 	if [ "$mode" = "-create" ];then
 		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
+			echo "Directory: $(pwd)" >> temp_header # on initialise la première ligne de notre header avant la boucle
+			i=0
+			j=0
+			nomDirectory=()
 			while read ligne 
 			do
 
 				set -- $ligne
-				echo "$9 Je suis le 9"
-				echo "$ligne Je suis la ligne"
-				 
-				echo "Je suis dans le while"
+
 				if [ "$9" != "$ARCHIVE" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
 						if [ -d $9 ]; then #Si c'est un répertoire
-							echo "je suis un répertoire"
-							rep=$9 #On enregistre le nom du répertoire afin d'afficher par la suite son arborescence
-							echo "Directory: $(pwd)" >> $temp_header
-						fi						
-					echo $9 $1 $5 >> $temp_header
+							((i++))
+							nomDirectory[$i]="$9" #On enregistre le nom du répertoire afin d'afficher par la suite son arborescence		
+
+						elif [ -r $9 ]; then #si le fichier est lisible on le met dans le fichier temporaire du body
+							cat $9 >> temp_body
+							taille=$(wc -l $9 | cut -f1 -d' ')
+						fi	
+							echo "$9 $1 $5 taille=$taille" >> temp_header
+					
 				fi
 				if [[ "$ligne" = "" ]]; then #si la ligne de ls -Rl est vide cela signifie qu'on passe au répertoire suivant
-					echo "Je suis dans le if ligne vide"
-					echo "@" >> $temp_header
-					echo "Directory: $(pwd)/$rep" >> $temp_header #donc on affiche le nom du répertoire et son fullpath
+					((j++))
+					echo "@" >> temp_header
+					echo "Directory: $(pwd)/${nomDirectory[$j]}" >> temp_header #donc on affiche le nom du répertoire et son fullpath
 				fi
 
-			done < "listeFich"			
-		echo ${mode:1} $ARCHIVE $(cat $temp_header) | nc -w1 $NOM_SERV $PORT
+			done < "listeFich"		
+
+			rm listeFich	
+		echo ${mode:1} $ARCHIVE $(cat temp_header) | nc -w1 $NOM_SERV $PORT
+
 	elif [ "$mode" = "-list" ];then
 		echo ${mode:1} | nc -w1 $NOM_SERV $PORT
 	fi
 	
-	 
 fi
 
