@@ -30,7 +30,7 @@ else
 
 				set -- $ligne
 
-				if [ "$9" != "$ARCHIVE" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
+				if [ "$9" != "$ARCHIVE" -a  "$9" != "listeFich" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
 						if [ ! -d $current/$9 ]; then
 							if [ -r $current/$9 ]; then #si le fichier est lisible on le met dans le fichier temporaire du body
 								cat $current/$9 >> temp_body
