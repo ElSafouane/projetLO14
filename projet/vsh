@@ -68,6 +68,7 @@ else
 
 			echo "$debut_header:$debut_body" > $ARCHIVE
 			echo "" >> $ARCHIVE
+			sed -i 's/\//\\/g' temp_header
 			cat temp_header >> $ARCHIVE
 			echo "FIN DU HEEEAAADDEEERRRR" >> $ARCHIVE
 			cat temp_body >> $ARCHIVE
