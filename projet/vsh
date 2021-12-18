@@ -20,6 +20,8 @@ else
 		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
 			echo "Directory: $(pwd)" >> temp_header # on initialise la première ligne de notre header avant la boucle
 			j=0
+			bodydeb=1
+			taille=0
 			nomDirectory=()
 			current=$(pwd)
 			echo $current
@@ -29,20 +31,23 @@ else
 				set -- $ligne
 
 				if [ "$9" != "$ARCHIVE" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
-						taille=""
-						echo "$current/$9"
 						if [ ! -d $current/$9 ]; then
 							if [ -r $current/$9 ]; then #si le fichier est lisible on le met dans le fichier temporaire du body
-								echo "je suis un fichier lisible et je suis $9" 
 								cat $current/$9 >> temp_body
+								if [ "$taille" -ne 0 ]; then
+								bodydeb=$(echo $(($bodydeb+$taille)))
+								fi
 								taille=$(wc -l $current/$9 | cut -f1 -d' ')
-							if [ $taille -eq 0 ];then
-								taille=""
+								if [ $taille -eq 0 ];then
+									echo "$9 $1 $5 $bodydeb" >> temp_header
+								else 
+									echo "$9 $1 $5 $bodydeb $taille" >> temp_header
+								fi
+								echo " je suis $9 et je commence ligne $bodydeb avec comme taille $taille"
 							fi
-							fi
+						else 
+							echo "$9 $1 $5" >> temp_header
 						fi	
-							echo "$9 $1 $5 $taille" >> temp_header
-					
 				fi
 				if [[ $ligne =~ ^\./.+:$ ]]; then
 					((j++))
