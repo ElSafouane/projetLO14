@@ -20,46 +20,42 @@ else
 		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
 			echo "Directory: $(pwd)" >> temp_header # on initialise la première ligne de notre header avant la boucle
 			j=0
-			bodydeb=1
-			taille=0
+			bodydeb=1 #variable qui sert à repérer le début du fichier dans le body
+			taille=0 
 			nomDirectory=()
-			current=$(pwd)
-			echo $current
+			current=$(pwd) #variable qui nous sert à nous repérer dans l'arborescence 
 			while read ligne 
 			do
 
-				set -- $ligne
+				set -- $ligne #facilite la manipulation
 
 				if [ "$9" != "$ARCHIVE" -a  "$9" != "listeFich" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
 						if [ ! -d $current/$9 ]; then
 							if [ -r $current/$9 ]; then #si le fichier est lisible on le met dans le fichier temporaire du body
-								cat $current/$9 >> temp_body
-								if [ "$taille" -ne 0 ]; then
+								cat $current/$9 >> temp_body #on enregistre le contenu du fichier dans le body
+								if [ "$taille" -ne 0 ]; then #si sa taille du fichier précédent est != de 0 alors on incrémente la variable bodydeb
 								bodydeb=$(echo $(($bodydeb+$taille)))
 								fi
-								taille=$(wc -l $current/$9 | cut -f1 -d' ')
+								taille=$(wc -l $current/$9 | cut -f1 -d' ') #on calcule la taille du fichier actuel
 								if [ $taille -eq 0 ];then
-									echo "$9 $1 $5 $bodydeb" >> temp_header
+									echo "$9 $1 $5 $bodydeb" >> temp_header #si il est vide (taille=0) on affiche pas l'information
 								else 
-									echo "$9 $1 $5 $bodydeb $taille" >> temp_header
+									echo "$9 $1 $5 $bodydeb $taille" >> temp_header 
 								fi
-								echo " je suis $9 et je commence ligne $bodydeb avec comme taille $taille"
 							fi
 						else 
 							echo "$9 $1 $5" >> temp_header
 						fi	
 				fi
-				if [[ $ligne =~ ^\./.+:$ ]]; then
+				if [[ $ligne =~ ^\./.+:$ ]]; then #si on repère un ligne de changement de dossier dans le ls -Rl
 					((j++))
-					nomDirectory[$j]=$(echo $ligne | cut -f2 -d'.' | sed 's/://')
-					echo "Je suis dans le if ligne vide rep est ${nomDirectory[$j]}"
-					echo "@" >> temp_header
+					nomDirectory[$j]=$(echo $ligne | cut -f2 -d'.' | sed 's/://') #on récupère le nom de se dossier
+					echo "@" >> temp_header #marquage de changement de dossier
 					echo "Directory: $(pwd)${nomDirectory[$j]}" >> temp_header #donc on affiche le nom du répertoire et son fullpath
-					current=$(pwd)${nomDirectory[$j]}
-					echo "Jesuis le current $current"
+					current=$(pwd)${nomDirectory[$j]} #on actualise le dossier dans lequel on se trouve ce qui va permettre de cat les fichiers de se dossier
 				fi
 
-			done < "listeFich"		
+			done < "listeFich" #On effectue la boucle sur le ls -Rl
 
 			rm listeFich	
 			debut_header=3
@@ -68,7 +64,7 @@ else
 
 			echo "$debut_header:$debut_body" > $ARCHIVE
 			echo "" >> $ARCHIVE
-			sed -i 's/\//\\/g' temp_header
+			sed -i 's/\//\\/g' temp_header #on remplace tous les '/' par des '\'
 			cat temp_header >> $ARCHIVE
 			echo "FIN DU HEEEAAADDEEERRRR" >> $ARCHIVE
 			cat temp_body >> $ARCHIVE
