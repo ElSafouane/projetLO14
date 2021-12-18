@@ -19,37 +19,56 @@ else
 	if [ "$mode" = "-create" ];then
 		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
 			echo "Directory: $(pwd)" >> temp_header # on initialise la première ligne de notre header avant la boucle
-			i=0
 			j=0
 			nomDirectory=()
+			current=$(pwd)
+			echo $current
 			while read ligne 
 			do
 
 				set -- $ligne
 
 				if [ "$9" != "$ARCHIVE" -a "$9" != "" ]; then #On vérifie si la ligne correspond bien à une ligne à afficher (ligne d'un fichier ou d'un répertoire)
-						if [ -d $9 ]; then #Si c'est un répertoire
-							((i++))
-							nomDirectory[$i]="$9" #On enregistre le nom du répertoire afin d'afficher par la suite son arborescence		
-
-						elif [ -r $9 ]; then #si le fichier est lisible on le met dans le fichier temporaire du body
-							cat $9 >> temp_body
-							taille=$(wc -l $9 | cut -f1 -d' ')
+						taille=""
+						echo "$current/$9"
+						if [ ! -d $current/$9 ]; then
+							if [ -r $current/$9 ]; then #si le fichier est lisible on le met dans le fichier temporaire du body
+								echo "je suis un fichier lisible et je suis $9" 
+								cat $current/$9 >> temp_body
+								taille=$(wc -l $current/$9 | cut -f1 -d' ')
+							if [ $taille -eq 0 ];then
+								taille=""
+							fi
+							fi
 						fi	
-							echo "$9 $1 $5 taille=$taille" >> temp_header
+							echo "$9 $1 $5 $taille" >> temp_header
 					
 				fi
-				if [[ "$ligne" = "" ]]; then #si la ligne de ls -Rl est vide cela signifie qu'on passe au répertoire suivant
+				if [[ $ligne =~ ^\./.+:$ ]]; then
 					((j++))
+					nomDirectory[$j]=$(echo $ligne | cut -f2 -d'.' | sed 's/://')
+					echo "Je suis dans le if ligne vide rep est ${nomDirectory[$j]}"
 					echo "@" >> temp_header
-					echo "Directory: $(pwd)/${nomDirectory[$j]}" >> temp_header #donc on affiche le nom du répertoire et son fullpath
+					echo "Directory: $(pwd)${nomDirectory[$j]}" >> temp_header #donc on affiche le nom du répertoire et son fullpath
+					current=$(pwd)${nomDirectory[$j]}
+					echo "Jesuis le current $current"
 				fi
 
 			done < "listeFich"		
 
 			rm listeFich	
-		echo ${mode:1} $ARCHIVE $(cat temp_header) | nc -w1 $NOM_SERV $PORT
+			debut_header=3
+			taille_body=$(wc -l temp_header | cut -f1 -d' ')
+			debut_body=$(echo $(($taille_body+$debut_header+1)))
 
+			echo "$debut_header:$debut_body" > $ARCHIVE
+			echo "" >> $ARCHIVE
+			cat temp_header >> $ARCHIVE
+			echo "FIN DU HEEEAAADDEEERRRR" >> $ARCHIVE
+			cat temp_body >> $ARCHIVE
+		echo ${mode:1} $ARCHIVE $(cat temp_header) | nc -w1 $NOM_SERV $PORT
+			rm temp_body
+			rm temp_header
 	elif [ "$mode" = "-list" ];then
 		echo ${mode:1} | nc -w1 $NOM_SERV $PORT
 	fi
