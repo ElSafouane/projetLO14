@@ -91,11 +91,11 @@ else
 
 			repCourant=$(pwd)
 			echo $repCourant
-			repProjet=$(pwd)
 			cd archive
 			pwd
 
-			firstLine=$(head -1 $ARCHIVE) #Je prends separemment la premiere ligne pour avoir le debut du header et du body
+			sed 's/\\/\//g' $ARCHIVE > tempArch
+			firstLine=$(head -1 tempArch) #Je prends separemment la premiere ligne pour avoir le debut du header et du body
 			debut_header=$(echo $firstLine | cut -d':' -f1) 
 			debut_body=$(echo $firstLine | cut -d':' -f2)		
 
@@ -103,6 +103,8 @@ else
 			#Dans la loop on va faire un set blblbl
 			#On aura qqchose dans le for de la meme sructure que ça
 			i=0
+
+		
 			while read ligne
 			do
 				((i++))
@@ -117,32 +119,38 @@ else
 						cd $repCourant/$2
 						#echo "je suis dans le directory $2"
 
-
+						j=0
 						while read line #Pour chaque dossier je créée les fichiers dedans
 						do
-							
+							((j++))
+							echo "j est egal à $j"
 							set -- $line
-							if [[ "$line" = "@" ]];then
+							if [[ "$line" = "@" ]] || [[ $j -eq $debut_body ]];then
 								break
-							fi
-							echo " C'est la ligne $line"
-							if [[ $(echo $2 | cut -c1) = "d" ]];then
-								#pwd # affiche /projet/archive
-								mkdir $1
 							else
-								touch $1
+								#echo " C'est la ligne $line"
+								if [[ $(echo $2 | cut -c1) = "d" ]];then
+									mkdir $1
+								elif [[ $(echo $2 | cut -c1) = "-" ]];then
+									touch $1
+								fi
 							fi
 
 
 						done
 						
 					elif [[ $ligne =~ ^[^@+] ]] && [ "$4" != "" ];then
-
-						echo "c'est la ligne $1" 
+						echo ""
+						#echo "c'est la ligne $1" 
 					fi
 					
 				#fi
-			done < $ARCHIVE
+			done < tempArch
+			echo "$(pwd) je suis la"
+			cd
+			cd projet/archive
+			rm tempArch
+			
 
 		
 		
