@@ -17,6 +17,13 @@ if [[ -z $NOM_SERV || -z $PORT ]];then
 
 else
 	if [ "$mode" = "-create" ];then
+
+		if [ -z $4 ];then
+			echo "Veuillez indiquer le nom de l'archive à créer"
+			echo "Usage: vsh -create [SERVER_NAME] [PORT] [ARCHIVE_NAME]"
+		else
+
+
 		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
 			echo "Directory: $(pwd)" >> temp_header # on initialise la première ligne de notre header avant la boucle
 			j=0
@@ -71,8 +78,80 @@ else
 		echo ${mode:1} $ARCHIVE $(cat temp_header) | nc -w1 $NOM_SERV $PORT
 			rm temp_body
 			rm temp_header
+		fi
 	elif [ "$mode" = "-list" ];then
 		echo ${mode:1} | nc -w1 $NOM_SERV $PORT
+
+
+	elif [ "$mode" = "-extract" ];then
+		if [ -z $4 ];then
+			echo "Veuillez indiquer l'archive à extraire"
+			echo "Usage: vsh -extract [SERVER_NAME] [PORT] [ARCHIVE_NAME]"
+		else
+
+			repCourant=$(pwd)
+			echo $repCourant
+			repProjet=$(pwd)
+			cd archive
+			pwd
+
+			firstLine=$(head -1 $ARCHIVE) #Je prends separemment la premiere ligne pour avoir le debut du header et du body
+			debut_header=$(echo $firstLine | cut -d':' -f1) 
+			debut_body=$(echo $firstLine | cut -d':' -f2)		
+
+			#Prendre dans chaque variable le debut et la fin du header pour pouvoir faire un for jusqu'a la fin du header 
+			#Dans la loop on va faire un set blblbl
+			#On aura qqchose dans le for de la meme sructure que ça
+			i=0
+			while read ligne
+			do
+				((i++))
+				if [[ $i -eq $debut_body ]];then
+					break			
+				fi
+				set -- $ligne
+
+				#if [ "$9" != "$ARCHIVE" -a  "$9" != "listeFich" -a "$9" != "" ];then
+					if [[ $ligne =~ ^"Directory"+ ]];then
+						mkdir -p $repCourant/$2
+						cd $repCourant/$2
+						#echo "je suis dans le directory $2"
+
+
+						while read line #Pour chaque dossier je créée les fichiers dedans
+						do
+							
+							set -- $line
+							if [[ "$line" = "@" ]];then
+								break
+							fi
+							echo " C'est la ligne $line"
+							if [[ $(echo $2 | cut -c1) = "d" ]];then
+								#pwd # affiche /projet/archive
+								mkdir $1
+							else
+								touch $1
+							fi
+
+
+						done
+						
+					elif [[ $ligne =~ ^[^@+] ]] && [ "$4" != "" ];then
+
+						echo "c'est la ligne $1" 
+					fi
+					
+				#fi
+			done < $ARCHIVE
+
+		
+		
+			echo ${mode:1} $ARCHIVE | nc -w1 $NOM_SERV $PORT
+		
+		fi
+
+
+
 	fi
 	
 fi
