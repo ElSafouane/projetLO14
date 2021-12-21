@@ -109,7 +109,7 @@ else
 			do
 				((i++))
 				if [[ $i -eq $debut_body ]];then
-					break			
+					break		
 				fi
 				set -- $ligne
 
@@ -133,6 +133,7 @@ else
 									mkdir $1
 								elif [[ $(echo $2 | cut -c1) = "-" ]];then
 									touch $1
+								
 								fi
 							fi
 
