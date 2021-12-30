@@ -12,6 +12,8 @@ declare -r PORT=$3
 declare -r ARCHIVE=$4
 
 
+
+
 if [[ -z $NOM_SERV || -z $PORT ]];then
 	echo "Veuillez rentrer un nom de serveur et un port"
 
@@ -99,6 +101,7 @@ else
 			debut_body=$(echo $firstLine | cut -d':' -f2)		
 
 			i=0
+			
 			while read ligne #On va verifier si le fichier dans tempArch est un dossier ou pas
 			do
 				((i++))
@@ -108,32 +111,175 @@ else
 				set -- $ligne
 
 					if [[ $ligne =~ ^"Directory"+ ]];then #Si c'est un directory alors on créé le dossier chez le client
-						mkdir -p $repCourant/$2
-						cd $repCourant/$2
+						mkdir -p $repCourant/$ARCHIVE/$2
+						cd $repCourant/$ARCHIVE/$2
 						#echo "je suis dans le directory $2"
 
 						j=0
 						while read line #Pour chaque dossier je créé les fichiers dedans
 						do
 							((j++))
-							echo "j est egal à $j"
 							set -- $line
 							if [[ "$line" = "@" ]] || [[ $j -eq $debut_body ]];then #Quand on change de dossier ou qu'on arrive au body on sort de la boucle
 								break
 							else
-								#echo " C'est la ligne $line"
 								if [[ $(echo $2 | cut -c1) = "d" ]];then  #Si dans le dossier on a encore un dossier on le crée sinon on créé un fichier vide 
 									mkdir $1
+									
+									if [[ $(echo $2 | cut -c2) = "r" ]];then
+										ru=4
+										
+									else
+
+										ru=0
+									fi
+									if [[ $(echo $2 | cut -c3) = "w" ]];then
+
+										wu=2
+										echo "Pour $1 $2 en position 3 on a "
+										echo $2 | cut -c3
+									else
+
+										wu=0
+									fi
+									if [[ $(echo $2 | cut -c4) = "x" ]];then
+										xu=1
+									else
+
+										xu=0
+									fi
+									((u=ru+wu+xu))
+								
+
+									if [[ $(echo $2 | cut -c5) = "r" ]];then
+										rg=4
+									else
+
+										rg=0
+									fi
+									if [[ $(echo $2 | cut -c6) = "w" ]];then
+										wg=2
+									else
+
+										wg=0
+									fi
+									if [[ $(echo $2 | cut -c7) = "x" ]];then
+										xg=1
+									else
+
+										xg=0
+									fi
+									((g=rg+wg+xg))
+									
+
+
+									if [[ $(echo $2 | cut -c8) = "r" ]];then
+										ro=4
+									else
+
+										ro=0
+									fi
+									if [[ $(echo $2 | cut -c9) = "w" ]];then
+										wo=2
+									else
+
+										wo=0
+									fi
+									if [[ $(echo $2 | cut -c10) = "x" ]];then
+										xo=1
+									else
+
+										xo=0
+									fi
+									((o=ro+wo+xo))
+									
+									echo "chmod $u$g$o $1"
+									chmod $u$g$o $1 
+
 								elif [[ $(echo $2 | cut -c1) = "-" ]];then
 									touch $1
+					
 									for (( iter=$4+$debut_body; iter<=$4+$debut_body+$5-1; iter++ ))  #On mets ce qu'il y'a de la ligne indiquée dans le header jusqu'à la taille du fichier
 									do
 										
-										head -n $(( $4+$debut_body+$5 - 2 )) ~/projet/tempArch | tail -n $(( $5 ))  > $1
+										head -n $(( $4+$debut_body+$5 - 2 )) $repCourant/tempArch | tail -n $(( $5 ))  > $1
 
 									done
+									
+									if [[ $(echo $2 | cut -c2) = "r" ]];then
+										ru=4
+										
+									else
+
+										ru=0
+									fi
+									if [[ $(echo $2 | cut -c3) = "w" ]];then
+
+										wu=2
+										echo "Pour $1 $2 en position 3 on a "
+										echo $2 | cut -c3
+									else
+
+										wu=0
+									fi
+									if [[ $(echo $2 | cut -c4) = "x" ]];then
+										xu=1
+									else
+
+										xu=0
+									fi
+									((u=ru+wu+xu))
+								
+
+									if [[ $(echo $2 | cut -c5) = "r" ]];then
+										rg=4
+									else
+
+										rg=0
+									fi
+									if [[ $(echo $2 | cut -c6) = "w" ]];then
+										wg=2
+									else
+
+										wg=0
+									fi
+									if [[ $(echo $2 | cut -c7) = "x" ]];then
+										xg=1
+									else
+
+										xg=0
+									fi
+									((g=rg+wg+xg))
+									
+
+
+									if [[ $(echo $2 | cut -c8) = "r" ]];then
+										ro=4
+									else
+
+										ro=0
+									fi
+									if [[ $(echo $2 | cut -c9) = "w" ]];then
+										wo=2
+									else
+
+										wo=0
+									fi
+									if [[ $(echo $2 | cut -c10) = "x" ]];then
+										xo=1
+									else
+
+										xo=0
+									fi
+									((o=ro+wo+xo))
+									
+									echo "chmod $u$g$o $1"
+									chmod $u$g$o $1 
 								
 								fi
+
+
+								
 							fi
 
 
@@ -144,8 +290,9 @@ else
 						#echo "c'est la ligne $1" 
 					fi
 					
-			done < tempArch
-			#rm tempArch
+			done < $repCourant/tempArch
+			cd $repCourant
+			rm tempArch
 			
 		
 				if [ ! $mode = "-extract" ]; then
@@ -159,3 +306,6 @@ else
 	fi
 	
 fi
+
+
+
