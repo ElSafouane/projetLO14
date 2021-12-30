@@ -123,19 +123,18 @@ function commande-list () {
 	else
 		echo "Pas d'archive dans ce serveur"
 	fi
-	echo $cmd
 }
 
 function commande-create () {
 
 	#cmd contiens le mode
-	echo $cmd
+	#echo $cmd
 
 	#args contient le nom de l'archive
-	echo -e "$args je suis args\n\n\n\n\n"
+	#echo -e "$args je suis args\n\n\n\n\n"
 
 	#arg1 contient le path du directory je sais pas pourquoi
-	echo -e "$arg1 JE suis arg1\n\n\n\n\n"
+	#echo -e "$arg1 JE suis arg1\n\n\n\n\n"
 
 	#arg2 contient le contenu du fichier
 
@@ -143,6 +142,16 @@ function commande-create () {
 	
 }
 
+function commande-extract () {
+
+	#echo "$args est args" 
+	arch=$(echo $args)
+	#echo "$arch je suis l'archive"
+	sed 's/\\/\//g' archive/$arch > archExtract
+	cat archExtract
+	rm archExtract
+	
+}
 
 #function commande-vsh () {
 #	

@@ -90,12 +90,10 @@ else
 		else
 
 			repCourant=$(pwd)
-			echo $repCourant
-			cd archive
-			pwd
+			#echo $repCourant
 
-			sed 's/\\/\//g' $ARCHIVE > tempArch
-			cp tempArch ../tempArch
+			echo ${mode:1} $ARCHIVE | netcat -w 1 $NOM_SERV $PORT > tempArch #on lance une connexion avec le serveur qui lui va cat l'archive de son côté. On redirige le cat dans le dossier tempArch
+			
 			firstLine=$(head -1 tempArch) #Je prends separemment la premiere ligne pour avoir le debut du header et du body
 			debut_header=$(echo $firstLine | cut -d':' -f1) 
 			debut_body=$(echo $firstLine | cut -d':' -f2)		
@@ -147,15 +145,13 @@ else
 					fi
 					
 			done < tempArch
-			cd
-			cd projet/archive
-			rm tempArch
+			#rm tempArch
 			
-
 		
-		
-			echo ${mode:1} $ARCHIVE | nc -w1 $NOM_SERV $PORT
-		
+				if [ ! $mode = "-extract" ]; then
+				echo ${mode:1} $ARCHIVE | nc -w1 $NOM_SERV $PORT
+				fi
+	
 		fi
 
 
@@ -163,4 +159,3 @@ else
 	fi
 	
 fi
-
