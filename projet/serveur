@@ -54,14 +54,7 @@ function interaction() {
     while true; do
 	read cmd args arg1 || exit -1
 	fun="commande-$cmd"
-	if $modeBrowse;then
-		echo "Oui bien joué"
-		fun="browse-$cmd"
-		if [ "$cmd" = "exit" ];then
-			modeBrowse=false
-			fun="commande-$cmd"
-		fi
-	fi
+	
 	if [ "$(type -t $fun)" = "function" ]; then 
 	#Si la chaine de caractere est bien une fonction préalablement définie
 		$fun $args
@@ -70,9 +63,7 @@ function interaction() {
 	fi
     done
 }
-echo $nomArchive $contenuArchive
 # Les fonctions implémentant les différentes commandes du serveur
-
 
 function commande-non-comprise () {
 	echo $mode
@@ -206,8 +197,6 @@ function rechercheDossier () {
 }
 
 
-
-
 repCourant="/"
 
 function commande-cat () {
@@ -215,11 +204,16 @@ function commande-cat () {
 
 }
 
-function commande-pwd () {
-	pwd $1
 
+
+function commande-browse () {
+	echo $args
 }
 
+
+
+#mystr=$(commande-$cmd)
+#echo $mystr
 
 function browse-ls () {
 	ls -l
@@ -227,8 +221,9 @@ function browse-ls () {
 }
 
 
-function browse-pwd () {
-	echo $repCourant
+function commande-pwd () {
+	echo "Le rep courant est $repCourant"
+	echo "Par contre args c'est : $args"
 }
 
 
