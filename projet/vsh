@@ -84,6 +84,11 @@ else
 	elif [ "$mode" = "-list" ];then
 		echo ${mode:1} | nc -w1 $NOM_SERV $PORT
 
+	elif [ "$mode" = "-browse" ];then
+
+		cat <(echo ${mode:1} $ARCHIVE) - | nc $NOM_SERV $PORT
+		#echo ${mode:1} $ARCHIVE | nc $NOM_SERV $PORT
+
 
 	elif [ "$mode" = "-extract" ];then
 		if [ -z $4 ];then
