@@ -215,6 +215,8 @@ function commande-browse () {
 		commande-cat $args $fichier $option $repcourant
 	elif [ "$arg" = "rm" ]; then
 		commande-rm $args $fichier $repcourant
+	elif [ "$arg" = "cd" ];then
+		commande-cd $args $fichier
 	fi
 	done
 }
@@ -509,7 +511,50 @@ done < lsarch
 }
 
 
+function commande-cd () {
+	
+	#Tester si le dossier existe
+	oldrepcour=${repcourant%\*}
+	echo "$oldrepcour je suis l'ancien"
+	if [[ "$repcourant" =~ \\$ ]];then
+		chemincomp=$(echo "$repcourant$fichier")
+	else
+		chemincomp=$(echo "$repcourant\\$fichier")
+	fi
+	cheminmodif=$(echo $chemincomp | sed 's.\\.\\\\.g')
+	echo "$chemincomp je suis chemincomp. $cheminmodif je suis modif"
+	
+		if grep -q "^directory $cheminmodif" $(pwd)/archive/$args ; then
+			echo je suis la
+			present="ok"
+		fi
 
+		
+		if [ "$present" = "ok" -a "$fichier" != "" -a "$fichier" != ".." ] ; then
+			oldrepcour=$repcourant
+			#echo "$oldrepcour je suis le nouveau ancien"
+			if [[ "$repcourant" =~ \\$ ]];then
+				repcourant="$repcourant$fichier"
+			else
+				repcourant="$repcourant\\$fichier"
+			fi
+			#echo "$chemincomp je susi chemincomp"
+			#echo "$cheminmodif je suis lenouv chemin modif"
+			echo "$repcourant je suis repcourant"
+			present="ko"
+		elif [ "$fichier" != ".." ];then
+			oldrepcour=$repcourant
+			echo "$repcourant\\$fichier N'est pas un dossier dans $args"
+			
+		fi
+	
+		if [ "$fichier" = ".." ];then
+			echo "$oldrepcour je susi le old"
+			repcourant=${repcourant%\\*}
+			echo "tu as ecrit .. et l'ancien chemin est $repcourant"
+		fi
+		
+}
 
 
 
