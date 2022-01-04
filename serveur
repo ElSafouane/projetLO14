@@ -240,10 +240,22 @@ while read ligne
 do
 set -- $ligne
 if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
-	if [ "$ligne" = "@" ]; then
-		break
-	else
-		if [[ ! "$3" = "" ]];then
+	pathls=$(echo $repcourant | sed 's/\\/\\\\/g')
+	li=$(grep -n "${pathls}$" archive/$args | head -1 | cut -d':' -f1)
+
+		sed -n "$li,$ p" archive/$args > bouclels
+		while read ligne; do
+			if [ "$ligne" = "@" ]; then
+			finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
+			finli=$(echo "$(($finli+$li))")
+			break
+			fi
+		done < bouclels
+		finli=$(($finli-2))
+		li=$(($li+1))
+		sed -n "$li, $finli p" archive/$args > echols
+		while read ligne; do
+			set -- $ligne
 			if [ "$fichier" = "-l" ]; then
 				echo "$2 $3 $1"
 			else
@@ -256,10 +268,12 @@ if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
 					else
 						echo -n "$1 "
 					fi
-				fi
+				fi	
 			fi
-		fi
-	fi
+		done < echols
+		rm echols
+		rm bouclels
+		break
 else
 	fichier=$(echo $fichier | sed 's/\//\\/g')
 	if [[ "$repcourant" =~ \\$ ]];then
@@ -437,7 +451,6 @@ else
 fi	
 
 done < lsarch
-#echo -e "\n"
 rm lsarch
 
 }
@@ -528,19 +541,14 @@ function commande-cd () {
 
 		
 		if [ "$present" = "ok" -a "$fichier" != "" -a "$fichier" != ".." ] ; then
-			oldrepcour=$repcourant
-			#echo "$oldrepcour je suis le nouveau ancien"
 			if [[ "$repcourant" =~ \\$ ]];then
 				repcourant="$repcourant$fichier"
 			else
 				repcourant="$repcourant\\$fichier"
 			fi
-			#echo "$chemincomp je susi chemincomp"
-			#echo "$cheminmodif je suis lenouv chemin modif"
 			present="ko"
-		elif [ "$fichier" != ".." ];then
-			oldrepcour=$repcourant
-			
+		elif [ "$fichier" != ".." -a "$fichier" != "" ]; then
+			echo "cd: $fichier: No such file or directory"
 		fi
 		if [[ "$fichier" = ".." ]]; then
 			repcourant=${repcourant%\\*}
