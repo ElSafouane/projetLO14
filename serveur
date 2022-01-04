@@ -231,7 +231,7 @@ function commande-pwd () {
 
 function commande-ls () {
 
-path=$(sed -n "3 p" archive/$args | cut -d' ' -f2)
+#path=$(sed -n "3 p" archive/$args | cut -d' ' -f2)
 sed 's/\\/\\\\/g' archive/$args > lsarch
 while read ligne 
 do
@@ -240,7 +240,6 @@ if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
 	if [ "$ligne" = "@" ]; then
 		break
 	else
-		#echo "$3 je suis 3"
 		if [[ ! "$3" = "" ]];then
 			if [ "$fichier" = "-l" ]; then
 				echo "$2 $3 $1"
@@ -260,10 +259,10 @@ if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
 	fi
 else
 	fichier=$(echo $fichier | sed 's/\//\\/g')
-	if [[ "$path" =~ \\$ ]];then
-	pathls=$(echo $path$fichier | sed 's/\\/\\\\/g')
+	if [[ "$repcourant" =~ \\$ ]];then
+	pathls=$(echo $repcourant$fichier | sed 's/\\/\\\\/g')
 	else
-	pathls=$(echo $path\\$fichier | sed 's/\\/\\\\/g')
+	pathls=$(echo $repcourant\\$fichier | sed 's/\\/\\\\/g')
 	fi
 	li=$(grep -n "${pathls}$" archive/$args | head -1 | cut -d':' -f1)
 	if [ "$li" = "" ]; then
@@ -271,13 +270,10 @@ else
 		break
 	else
 
-		#finli=$(head -$i archive/$args | grep -n "@$" archive/$args | cut -d':' -f1)
-		#echo "$finli je suis finili"
 		sed -n "$li,$ p" archive/$args > bouclels
 		while read ligne; do
 			if [ "$ligne" = "@" ]; then
 			finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
-			#finli=$(grep -n "^@$" archive/$args | cut -d':' -f1 | head -1)
 			finli=$(echo "$(($finli+$li))")
 			break
 			fi
@@ -298,21 +294,11 @@ else
 				fi
 			fi
 		done < echols
-		#rm echols
+		rm echols
 		rm bouclels
 		break
 	fi 	
 fi	
-#if [[ $ligne =~ ^directory ]]; then
-#	set $ligne
-#	if [ "$fichier" = "" ]; then
-#		echo "ls normal"
-#	else 
-#		if [ "$2" = "$fichier" ];then
-#			echo $ligne
-#		fi 
-#	fi 
-#fi
 
 done < lsarch
 echo -e "\n"
@@ -322,7 +308,6 @@ rm lsarch
 
 function commande-cat () {
 
-path=$(sed -n "3 p" archive/$args | cut -d' ' -f2)
 sed 's/\\/\\\\/g' archive/$args > lsarch
 while read ligne 
 do
@@ -331,13 +316,14 @@ if [[ "$fichier" = "" ]]; then
 	echo "Usage cat fich"
 	break
 else
-	li=$(grep -n "$fichier " archive/$args | head -1 | cut -d':' -f1)
+
+	li=$(grep -n "^${fichier} " archive/$args | head -1 | cut -d':' -f1)
 	if [ "$li" = "" ]; then
 		echo "cat: $fichier: No such file or directory"
 		break
 	else
 		if [[ ! "$option" = "" ]]; then
-			li2=$(grep -n "$option " archive/$args | head -1 | cut -d':' -f1)
+			li2=$(grep -n "^${option} " archive/$args | head -1 | cut -d':' -f1)
 			if [ "$li2" = "" ]; then
 				echo "cat: $option: No such file or directory"
 				break
@@ -422,7 +408,7 @@ else
 					deb2=$4
 					long2=$5
 				done < tempcat2
-				#rm tempcat2
+				rm tempcat2
 				if [[ "$deb" = "" ]]; then
 					echo "cat: $fichier: Is a directory"
 					break
