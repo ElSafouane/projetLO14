@@ -202,8 +202,9 @@ function rechercheDossier () {
 
 
 function commande-browse () {
-	echo $args
+	#echo $args
 	repcourant=$(cat archive/$args | head -3 | tail -1 | cut -d' ' -f2)
+	racine=$(cat archive/$args | head -3 | tail -1 | cut -d' ' -f2)
 	while true; do
 	echo -n "vsh:>"
 	read arg fichier option
@@ -216,7 +217,7 @@ function commande-browse () {
 	elif [ "$arg" = "rm" ]; then
 		commande-rm $args $fichier $repcourant
 	elif [ "$arg" = "cd" ];then
-		commande-cd $args $fichier
+		commande-cd $args $fichier $racine
 	fi
 	done
 }
@@ -512,20 +513,16 @@ done < lsarch
 
 
 function commande-cd () {
-	
 	#Tester si le dossier existe
 	oldrepcour=${repcourant%\*}
-	echo "$oldrepcour je suis l'ancien"
 	if [[ "$repcourant" =~ \\$ ]];then
 		chemincomp=$(echo "$repcourant$fichier")
 	else
 		chemincomp=$(echo "$repcourant\\$fichier")
 	fi
 	cheminmodif=$(echo $chemincomp | sed 's.\\.\\\\.g')
-	echo "$chemincomp je suis chemincomp. $cheminmodif je suis modif"
 	
 		if grep -q "^directory $cheminmodif" $(pwd)/archive/$args ; then
-			echo je suis la
 			present="ok"
 		fi
 
@@ -540,18 +537,18 @@ function commande-cd () {
 			fi
 			#echo "$chemincomp je susi chemincomp"
 			#echo "$cheminmodif je suis lenouv chemin modif"
-			echo "$repcourant je suis repcourant"
 			present="ko"
 		elif [ "$fichier" != ".." ];then
 			oldrepcour=$repcourant
-			echo "$repcourant\\$fichier N'est pas un dossier dans $args"
 			
 		fi
-	
-		if [ "$fichier" = ".." ];then
-			echo "$oldrepcour je susi le old"
+		if [[ "$fichier" = ".." ]]; then
 			repcourant=${repcourant%\\*}
-			echo "tu as ecrit .. et l'ancien chemin est $repcourant"
+			if [[ "$repcourant\\" = "$racine" ]]; then
+				repcourant=$(echo "$repcourant\\")
+			fi
+		elif [[ "$fichier" = "" ]]; then
+			repcourant=$racine
 		fi
 		
 }
