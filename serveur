@@ -35,20 +35,7 @@ function accept-loop() {
 	interaction < "$FIFO" | netcat -kl -p "$PORT" > "$FIFO"
     done
 }
-
-# La fonction interaction lit les commandes du client sur entrée standard 
-# et envoie les réponses sur sa sortie standard. 
-#
-# 	CMD arg1 arg2 ... argn                   
-#                     
-# alors elle invoque la fonction :
-#                                                                            
-#         commande-CMD arg1 arg2 ... argn                                      
-#                                                                              
-# si elle existe; sinon elle envoie une réponse d'erreur.                     
-
-modeBrowse=false
-
+                 
 function interaction() {
     local cmd args arg1
     while true; do
@@ -56,21 +43,17 @@ function interaction() {
 	fun="commande-$cmd"
 	
 	if [ "$(type -t $fun)" = "function" ]; then 
-	#Si la chaine de caractere est bien une fonction préalablement définie
 		$fun $args
 	else
 	    commande-non-comprise $fun $args
 	fi
     done
 }
-# Les fonctions implémentant les différentes commandes du serveur
 
 function commande-non-comprise () {
 	echo $mode
    echo "Le serveur ne peut pas interpréter cette commande"
 }
-
-# On accepte et traite les connexions
 
 function commande-echo () {
 
@@ -118,70 +101,18 @@ function commande-list () {
 
 function commande-create () {
 
-	#cmd contiens le mode
-	#echo $cmd
-
-	#args contient le nom de l'archive
-	#echo -e "$args je suis args\n\n\n\n\n"
-
-	#arg1 contient le path du directory je sais pas pourquoi
-	#echo -e "$arg1 JE suis arg1\n\n\n\n\n"
-
-	#arg2 contient le contenu du fichier
-
 	mv $args archive/$args
 	
 }
 
 function commande-extract () {
 
-	#echo "$args est args" 
 	arch=$(echo $args)
-	#echo "$arch je suis l'archive"
 	sed 's/\\/\//g' archive/$arch > archExtract
 	cat archExtract
 	rm archExtract
 	
 }
-
-#function commande-vsh () {
-#	
-#	if [ $# -ne 0 ];then
-#		if [ "$mode" = "-list" ];then
-#			ls=$(ls ~/projet/archive)
-#			if [ -n "$ls" ];then
-#				echo -e "\nLes archives existantes sont:\n\n$ls"
-#			else
-#				echo "Pas d'archive dans ce serveur"
-#			fi
-#			
-#		elif [ "$1" = "-browse" ];then
-#			modeBrowse=true	
-#			echo -n "vsh:>"
-#
-#		elif [ "$1" = "-create" ]; then
-#				
-#			for i in $(ls $(pwd)/archive)
-#			do
-#				if [ -d $i ]; then
-#					echo "Directory: $(pwd)/$i/"
-#					"rechercheDossier"
-#
-#				fi
-#				set -- $(ls -l | grep $i)
-#				
-#				echo $9 $1 $5
-#	
-#			done
-#
-#
-#		fi
-#		
-#	else
-#		echo "Rentre une commande"
-#	fi
-#}
-
 
 
 function rechercheDossier () { 
@@ -196,20 +127,16 @@ function rechercheDossier () {
 
 }
 
-#repcourant="\\"
-
-
 
 
 function commande-browse () {
-	#echo $args
 	repcourant=$(cat archive/$args | head -3 | tail -1 | cut -d' ' -f2)
 	racine=$(cat archive/$args | head -3 | tail -1 | cut -d' ' -f2)
 	while true; do
 	echo -n "vsh:>"
-	read arg fichier option
+	read -r arg fichier option
 	if [ "$arg" = "pwd" ]; then
-	commande-pwd $repcourant
+		commande-pwd $repcourant
 	elif [ "$arg" = "ls" ]; then
 		commande-ls $args $fichier $repcourant $option
 	elif [ "$arg" = "cat" ]; then
@@ -218,28 +145,24 @@ function commande-browse () {
 		commande-rm $args $fichier $repcourant
 	elif [ "$arg" = "cd" ];then
 		commande-cd $args $fichier $racine
+	elif [ "$arg" = "touch" ];then
+		commande-touch $args $fichier $repcourant
 	fi
 	done
 }
 
 
-#mystr=$(commande-$cmd)
-#echo $mystr
-
-
-
 function commande-pwd () {
-	echo "Le rep courant est $repcourant"
+	echo "$repcourant"
 }
 
 function commande-ls () {
 
-#path=$(sed -n "3 p" archive/$args | cut -d' ' -f2)
 sed 's/\\/\\\\/g' archive/$args > lsarch
 while read ligne 
 do
 set -- $ligne
-if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
+if [[ "$fichier" = "" || "$fichier" = "-l" || "$fichier" = "-a" || "$fichier" = "-al" ]]; then
 	pathls=$(echo $repcourant | sed 's/\\/\\\\/g')
 	li=$(grep -n "${pathls}$" archive/$args | head -1 | cut -d':' -f1)
 
@@ -257,8 +180,12 @@ if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
 		while read ligne; do
 			set -- $ligne
 			if [ "$fichier" = "-l" ]; then
-				echo "$2 $3 $1"
-			else
+				if [[ "$1" =~ ^[^\.] ]];then
+					echo "$2 $3 $1"
+				fi
+			elif [ "$fichier" = "-al" ]; then
+					echo "$2 $3 $1"
+			elif [ "$fichier" = "-a" ]; then
 				if [[ "$2" =~ ^d ]]; then
 				echo -n "$1\ "
 				else
@@ -268,14 +195,26 @@ if [[ "$fichier" = "" || "$fichier" = "-l" ]]; then
 					else
 						echo -n "$1 "
 					fi
-				fi	
+				fi
+			else 
+				if [[ "$1" =~ ^[^\.] ]]; then
+					if [[ "$2" =~ ^d ]]; then
+						echo -n "$1\ "
+					else
+						droit=$(echo $2 | cut -c4)
+						if [[ "$droit" = "x" ]]; then
+							echo -n "$1* "
+						else
+							echo -n "$1 "
+						fi
+					fi
+				fi
 			fi
 		done < echols
 		rm echols
 		rm bouclels
 		break
 else
-	fichier=$(echo $fichier | sed 's/\//\\/g')
 	if [[ "$repcourant" =~ \\$ ]];then
 	pathls=$(echo $repcourant$fichier | sed 's/\\/\\\\/g')
 	else
@@ -286,7 +225,6 @@ else
 		echo "ls : cannot access '$fichier' : No such file or directory"
 		break
 	else
-
 		sed -n "$li,$ p" archive/$args > bouclels
 		while read ligne; do
 			if [ "$ligne" = "@" ]; then
@@ -300,16 +238,39 @@ else
 		sed -n "$li, $finli p" archive/$args > echols
 		while read ligne; do
 			set -- $ligne
-			if [[ "$2" =~ ^d ]]; then
-				echo -n "$1\ "
-			else
-				droit=$(echo $2 | cut -c4)
-				if [[ "$droit" = "x" ]]; then
-					echo -n "$1* "
-				else
-					echo -n "$1 "
+			if [ "$option" = "-l" ]; then
+				if [[ "$1" =~ ^[^\.] ]]; then
+					echo "$2 $3 $1"
 				fi
-			fi
+			elif [ "$option" = "-al" ]; then							
+				echo "$2 $3 $1"
+			elif [ "$option" = "-a" ]; then
+				if [[ "$2" =~ ^d ]]; then
+				echo -n "$1\ "
+				else
+					droit=$(echo $2 | cut -c4)
+					if [[ "$droit" = "x" ]]; then
+						echo -n "$1* "
+					else
+						echo -n "$1 "
+					fi
+				fi
+			else 
+				if [[ "$1" =~ ^[^\.] ]]; then
+					if [[ "$2" =~ ^d ]]; then
+						echo -n "$1\ "
+					else
+						droit=$(echo $2 | cut -c4)
+						if [[ "$droit" = "x" ]]; then
+							echo -n "$1* "
+						else
+							echo -n "$1 "
+						fi
+					fi
+				fi
+
+
+			fi 
 		done < echols
 		rm echols
 		rm bouclels
@@ -396,6 +357,8 @@ else
 				if [[ "$deb" = "" ]]; then
 					echo "cat: $fichier: Is a directory"
 					break
+				elif [[ "$long" = "" || "$long" = 0 ]]; then
+					break
 				else 
 					deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)		
 					deb=$(($deb+$deb_body-1))
@@ -426,11 +389,24 @@ else
 					long2=$5
 				done < tempcat2
 				rm tempcat2
+				deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)						
 				if [[ "$deb" = "" ]]; then
 					echo "cat: $fichier: Is a directory"
 					break
 				elif [[ "$deb2" = "" ]];then
 					echo "cat: $option: Is a directory"
+					break
+				elif [[ "$long" = "" || "$long" = 0 ]]; then
+					if [[ "$long2" != "" || "$long2" != 0 ]];then
+						deb2=$(($deb2+$deb_body-1))
+						fin2=$(($deb2+$long2-1))
+						sed -n "$deb2, $fin2 p" archive/$args
+					fi
+					break
+				elif [[ "$long2" = "" || "$long2" = 0 ]]; then
+					deb=$(($deb+$deb_body-1))
+					fin=$(($deb+$long-1))
+					sed -n "$deb, $fin p" archive/$args
 					break
 				else 
 					deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)		
@@ -457,76 +433,123 @@ rm lsarch
 
 
 function commande-rm () {
-
 sed 's/\\/\\\\/g' archive/$args | cut -d' ' -f1 > lsarch
+fichierrm=$(echo $fichier)
+verifrm=$(grep -n "$fichierrm " archive/$args | head -1 | cut -d':' -f2 | cut -d' ' -f2)
+if [[ "$verifrm" =~ ^d ]]; then
+	rmdir=1
+else
+	rmdir=0
+fi
 while read ligne 
 do
-set -- $ligne
-if [[ "$fichier" = "" ]]; then
-	echo "Usage rm fich"
-	break
-else
-	li=$(grep -n "$fichier " archive/$args | cut -d':' -f1)
-	echo "$li je suis li"
-	if [ "$li" = "" ]; then
-		echo "rm: cannot remove '$fichier': No such file or directory"
+	set -- $ligne
+	if [[ "$fichier" = "" ]]; then
 		break
 	else
-		repc=$(echo $repcourant | sed 's/\\/\\\\/g')
-		repc=$(grep -n "${repc}$" archive/$args | cut -d':' -f1)
-		sed -n "$repc,$ p" archive/$args > bouclels
-		while read ligne; do
-			if [ "$ligne" = "@" ]; then
-			finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
-			finli=$(echo "$(($finli+$repc))")
+		if [[ "$fichier" =~ \\+ ]]; then
+			fichier=${fichier##*\\}
+		fi	
+		li=$(grep -n "$fichier " archive/$args | cut -d':' -f1)
+		if [ "$li" = "" ]; then
 			break
-			fi
-		done < bouclels
-		finli=$(($finli-2))
-		repc=$(($repc+1))
-		sed -n "$repc, $finli p" archive/$args | cut -d' ' -f1 > echols
-		verif=0
-		while read ligne; do
-			if [[ $ligne =~ ^${fichier}$ ]]; then
-				verif=1
-			fi
-		done < echols
-		rm bouclels
-		rm echols	
-		if [[ "$verif" = 1 ]]; then
-			sed -n "$li p" archive/$args > tempcat
-			ok=0
-				while read ligne; do
-					set -- $ligne
-					if [[ ! "$4" = "" ]]; then
-						ok=1
-					fi
-				done < tempcat
-				rm tempcat
-			if [[ "$ok" = 0 ]]; then
-				echo "rm: cannot remove '$fichier': Is a directory"
-			else
-				sed "$li d" archive/$args > archive/$args
-				deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)		
-
-				echo "je suis dans verif = $verif"
-				break
-			fi
 		else
-			echo "rm: cannot remove '$fichier': No such file or directory"
-			break
-		fi		
+			if [[ $fichierrm =~ \\+ ]]; then
+				reprm=${fichierrm%\\*}
+				if [[ "$repcourant" =~ \\$ ]];then
+					repc=$(echo $repcourant$reprm | sed 's/\\/\\\\/g')
+				else
+					repc=$(echo $repcourant\\$reprm | sed 's/\\/\\\\/g')
+				fi
+				repc=$(grep -n "${repc}$" archive/$args | cut -d':' -f1)
+			else
+				if [[ "$rmdir" = 1 ]]; then	
+					if [[ "$repcourant" =~ \\$ ]];then
+						repc=$(echo $repcourant$fichierrm | sed 's/\\/\\\\/g')
+					else
+						repc=$(echo $repcourant\\$fichierrm | sed 's/\\/\\\\/g')
+					fi
+				else
+					repc=$(echo $repcourant | sed 's/\\/\\\\/g')
+				fi
+				repc=$(grep -n "${repc}$" archive/$args | cut -d':' -f1)
+			fi
+			sed -n "$repc,$ p" archive/$args > bouclels
+			while read ligne; do
+				if [ "$ligne" = "@" ]; then
+				finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
+				finli=$(echo "$(($finli+$repc))")
+				break
+				fi
+			done < bouclels
+			if [[ "$rmdir" = 1 ]]; then
+				sed -n "$repc p" archive/$args | cut -d' ' -f2 > echols
+			else
+				finli=$(($finli-2))
+				repc=$(($repc+1))
+				sed -n "$repc, $finli p" archive/$args | cut -d' ' -f1 > echols
+			fi
+			verif=0
+			while read ligne; do
+				if [[ "$rmdir" = 1 ]]; then
+					if [[ "$repcourant" =~ \\$ ]];then
+						path=$(echo $repcourant$fichierrm)
+					else
+						path=$(echo $repcourant\\$fichierrm)
+					fi
+					if [[ $ligne =~ ^${path}$ ]]; then
+						verif=1
+						echo "ils sont egaux"
+						break
+					fi
+				else	
+					if [[ $ligne =~ ^${fichier}$ ]]; then
+						verif=1
+						break
+					fi
+				fi
+			done < echols
+			rm bouclels
+			#rm echols
+			if [[ "$verif" = 1 ]]; then
+				sed -n "$li p" archive/$args > tempcat
+					while read ligne; do
+						set -- $ligne
+						if [[ "$2" =~ ^d ]]; then
+							ok=0
+							break
+						else 
+							ok=1
+							break
+						fi
+					done < tempcat
+					#rm tempcat
+				if [[ "$ok" = 0 ]]; then
+					#echo "rm: cannot remove '$fichier': Is a directory"
+					#repc=$(($repc-1))
+					finli=$(($finli-1))
+					sed "$repc,$finli d" archive/$args > temprm
+					cat temprm > archive/$args
+					break
+				else
+					sed "$li d" archive/$args > temprm
+					cat temprm > archive/$args
+					rm temprm
+					deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)		
+					break
+				fi
+			else
+				echo "rm: cannot remove '$fichierrm': No such file or directory"
+				break
+			fi		
+		fi
 	fi
-fi
 done < lsarch
-
-
-
+rm lsarch
 }
 
 
 function commande-cd () {
-	#Tester si le dossier existe
 	oldrepcour=${repcourant%\*}
 	if [[ "$repcourant" =~ \\$ ]];then
 		chemincomp=$(echo "$repcourant$fichier")
@@ -537,9 +560,7 @@ function commande-cd () {
 	
 		if grep -q "^directory $cheminmodif" $(pwd)/archive/$args ; then
 			present="ok"
-		fi
-
-		
+		fi		
 		if [ "$present" = "ok" -a "$fichier" != "" -a "$fichier" != ".." ] ; then
 			if [[ "$repcourant" =~ \\$ ]];then
 				repcourant="$repcourant$fichier"
@@ -547,7 +568,7 @@ function commande-cd () {
 				repcourant="$repcourant\\$fichier"
 			fi
 			present="ko"
-		elif [ "$fichier" != ".." -a "$fichier" != "" ]; then
+		elif [ "$fichier" != ".." -a "$fichier" != "\\" ]; then
 			echo "cd: $fichier: No such file or directory"
 		fi
 		if [[ "$fichier" = ".." ]]; then
@@ -555,7 +576,7 @@ function commande-cd () {
 			if [[ "$repcourant\\" = "$racine" ]]; then
 				repcourant=$(echo "$repcourant\\")
 			fi
-		elif [[ "$fichier" = "" ]]; then
+		elif [[ "$fichier" = "\\" ]]; then
 			repcourant=$racine
 		fi
 		
@@ -563,5 +584,48 @@ function commande-cd () {
 
 
 
+function commande-touch () {
+
+		repc=$(echo $repcourant | sed 's/\\/\\\\/g')
+		repc=$(grep -n "${repc}$" archive/$args | head -1 | cut -d':' -f1)
+		sed -n "$repc,$ p" archive/$args > bouclels
+		while read ligne; do
+			if [ "$ligne" = "@" ]; then
+			finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
+			finli=$(echo "$(($finli+$repc))")
+			break
+			fi
+		done < bouclels
+		finli=$(($finli-2))
+		repc=$(($repc+1))
+		sed -n "$repc, $finli p" archive/$args > echols
+		verif=0
+		while read ligne; do
+			set -- $ligne
+			if [[ $1 =~ ^${fichier}$ ]]; then
+				verif=1
+			fi
+		done < echols
+		rm bouclels
+		rm echols
+		if [ "$verif" -eq 1 ];then
+			echo "le verof est egala 1"
+		else
+			((derniereligne=$finli+1))
+			sed -n "$finli p" archive/$args > temptouch
+			while read ligne;
+			do
+				set -- $ligne
+				((ligneapres=$4+$5))
+				((finli=$finli+1))
+			done < temptouch
+			debutbody=$(head -1 archive/$args | cut -d':' -f2)
+			((debutbody=$debutbody+1))
+			rm temptouch
+			sed -i "$derniereligne i $fichier -rw-rw-r-- 1 $ligneapres 0" archive/$args
+			sed -i "1s/.*/3:$debutbody/" archive/$args
+		fi
+
+}
 
 accept-loop
