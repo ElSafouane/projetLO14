@@ -452,7 +452,6 @@ do
 		fi	
 		li=$(grep -n "$fichier " archive/$args | cut -d':' -f1)
 		if [ "$li" = "" ]; then
-			echo "rm: cannot remove '$fichierrm': No such file or directory"
 			break
 		else
 			if [[ $fichierrm =~ \\+ ]]; then
@@ -534,20 +533,86 @@ do
 					while read ligne; do
 						if [ "$ligne" = "@" ]; then
 						finli=$(grep -n "${ligne}" bouclerm | cut -d':' -f1 | head -1)
-						finli=$(echo "$(($finli+$finrm))")
+						finli=$(echo "$(($finli+$finrm-1))")
 						break
 						fi
 					done < bouclerm
 					rm bouclerm
+					sed -n "$debrm, $finli p" archive/$args > suppbody
+					while read ligne; do
+						set -- $ligne 
+						if [[ "$2" =~ ^[^d] && "$4" != "" ]]; then
+							echo "$4 $5" >> supprm
+						fi
+					done < suppbody
+					lignesupp=$(wc -l suppbody | cut -d' ' -f1)
+					debsupbody=$(cat supprm | head -1 | cut -d' ' -f1)
+					finsupbody=$(cat supprm | tail -1 | cut -d' ' -f1)
+					verif=$(cat supprm | tail -1 | cut -d' ' -f2)
+					if [[ "$debsupbody" = "$finsupbody" ]]; then
+						finsupbody=$(cat supprm | head -1 | cut -d' ' -f2)
+						finsupbody=$(($debsupbody+$finsupbody-1))
+					else
+						if [[ "$verif" = "" || "$verif" = 0 ]]; then
+							finsupbody=$(($finsupbody-1))
+						else
+							finsupbody=$(($finsupbody+$verif-1))
+						fi
+					fi
+					debsupbody=$(($debsupbody+$deb_body-1))
+					finsupbody=$(($finsupbody+$deb_body-1))
+					sed -i "$debsupbody, $finsupbody d" archive/$args
 					sed -i "$li d" archive/$args
-					finli=$(($finli-2))
 					debrm=$(($debrm-1))
+					finli=$(($finli-1))
 					sed -i "$debrm,$finli d" archive/$args
-					break
 				else
-					sed -i "$li d" archive/$args 
-					break
+					lignesupp=$(cat archive/$args | head -1 | cut -d':' -f2)
+					sed -n "$li p" archive/$args > suppbody
+					while read ligne; do
+						set -- $ligne
+						echo "$4 $5" > supprm
+					done < suppbody
+					debsupbody=$(cat supprm | head -1 | cut -d' ' -f1)
+					finsupbody=$(cat supprm | tail -1 | cut -d' ' -f2)
+					if [[ "$finsupbody" = "" || "$finsupbody" = 0 ]]; then
+						sed -i "$li d" archive/$args 
+					else
+						finsupbody=$(($debuspbody+$finsupbody-1))
+						sed -i "$debsupbody, $finsupbody d" archive/$args
+						sed -i "$li d" archive/$args 
+					fi
 				fi
+				rm supprm
+				rm suppbody
+				deb_body=$(($deb_body-$lignesupp-1)) 
+				sed -i "1s/.*/3:$deb_body/" archive/$args
+
+				sed -n "1, $debrm p" archive/$args > majdebbody
+				sed -i 's/\\/\\\\/g' majdebbody
+				while read ligne; do
+					set -- $ligne 
+						if [[ "$2" =~ ^[^d] && "$4" != "" ]]; then
+							echo "$4 $5" >> majrm
+						fi
+				done < majdebbody
+				lastdebbody=$(cat majrm | tail -1 | cut -d' ' -f1)
+				tailledebbody=$(cat majrm | tail -1 | cut -d' ' -f2)
+				sed -n "$debrm,$(($deb_body-1)) p" archive/$args > majdebbody
+				sed -i 's/\\/\\\\/g' majdebbody
+				while read ligne; do
+					set -- $ligne 
+						if [[ "$2" =~ ^[^d] && "$4" != "" ]]; then
+							if [[ "$tailledebbody" = "" || "$tailledebbody" = 0 ]]; then
+								sed -i "s/$4/$lastdebbody/" archive/$args
+							else
+								lastdebbody=$(($lastdebbody+$tailledebbody))
+								sed -i "s/$4/$lastdebbody/" archive/$args
+							fi
+							tailledebbody=$(echo $5)
+						fi
+				done < majdebbody
+				break
 			else
 				echo "rm: cannot remove '$fichierrm': No such file or directory"
 				break
