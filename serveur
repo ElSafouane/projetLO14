@@ -622,12 +622,12 @@ do
 							nligne=$(grep -n "${ligne}$" archive/$args | head -1 | cut -d':' -f1)
 							if [[ "$tailledebbody" = "" || "$tailledebbody" = 0 ]]; then
 								#sed -i "${nligne}s/$4/$lastdebbody/" archive/$args
-								sed -i "s/^\(.+ \{3\}\) ${4}/$lastdebbody/" archive/$args
+								#sed -i "s/^\(.+ \{3\}\) ${4}/$lastdebbody/" archive/$args
+								echo ""
 							else
 								lastdebbody=$(($lastdebbody+$tailledebbody))
-								sed -i "s/^\(.+ \{3\}\) ${4}/$lastdebbody/" archive/$args
+								#sed -i "s/^\(.+ \{3\}\) ${4}/$lastdebbody/" archive/$args
 								#sed -i "s/^\(.+ \{3\}\) [0-9]/$lastdebbody/" archive/$args
-
 							fi
 							tailledebbody=$(echo $5)
 						fi
