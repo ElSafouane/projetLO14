@@ -452,6 +452,7 @@ do
 		fi	
 		li=$(grep -n "$fichier " archive/$args | cut -d':' -f1)
 		if [ "$li" = "" ]; then
+			echo "rm: cannot remove '$fichierrm': No such file or directory"
 			break
 		else
 			if [[ $fichierrm =~ \\+ ]]; then
@@ -490,6 +491,7 @@ do
 				sed -n "$repc, $finli p" archive/$args | cut -d' ' -f1 > echols
 			fi
 			verif=0
+			sed -i 's/\\/\\\\/g' echols
 			while read ligne; do
 				if [[ "$rmdir" = 1 ]]; then
 					if [[ "$repcourant" =~ \\$ ]];then
@@ -497,9 +499,8 @@ do
 					else
 						path=$(echo $repcourant\\$fichierrm)
 					fi
-					if [[ $ligne =~ ^${path}$ ]]; then
+					if [[ "$ligne" = "$path" ]]; then
 						verif=1
-						echo "ils sont egaux"
 						break
 					fi
 				else	
@@ -510,7 +511,7 @@ do
 				fi
 			done < echols
 			rm bouclels
-			#rm echols
+			rm echols
 			if [[ "$verif" = 1 ]]; then
 				sed -n "$li p" archive/$args > tempcat
 					while read ligne; do
@@ -523,19 +524,28 @@ do
 							break
 						fi
 					done < tempcat
-					#rm tempcat
+					rm tempcat
+					deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)	
 				if [[ "$ok" = 0 ]]; then
-					#echo "rm: cannot remove '$fichier': Is a directory"
-					#repc=$(($repc-1))
-					finli=$(($finli-1))
-					sed "$repc,$finli d" archive/$args > temprm
-					cat temprm > archive/$args
+					path=$(echo $path | sed 's/\\/\\\\/g')
+					debrm=$(grep -n "$path" archive/$args | head -1 | cut -d':' -f1)
+					finrm=$(grep -n "$path" archive/$args | tail -1 | cut -d':' -f1)
+					sed -n "$finrm,$ p" archive/$args > bouclerm
+					while read ligne; do
+						if [ "$ligne" = "@" ]; then
+						finli=$(grep -n "${ligne}" bouclerm | cut -d':' -f1 | head -1)
+						finli=$(echo "$(($finli+$finrm))")
+						break
+						fi
+					done < bouclerm
+					rm bouclerm
+					sed -i "$li d" archive/$args
+					finli=$(($finli-2))
+					debrm=$(($debrm-1))
+					sed -i "$debrm,$finli d" archive/$args
 					break
 				else
-					sed "$li d" archive/$args > temprm
-					cat temprm > archive/$args
-					rm temprm
-					deb_body=$(cat archive/$args | head -1 | cut -d':' -f2)		
+					sed -i "$li d" archive/$args 
 					break
 				fi
 			else
