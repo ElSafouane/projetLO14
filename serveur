@@ -703,4 +703,169 @@ function commande-touch () {
 
 }
 
+function commande-mkdir () {
+
+
+	#Detecter si le dossier existe déja
+		if [[ "$repcourant" =~ \\$ ]];then
+		chemincomp=$(echo "$repcourant$fichier")
+		else
+			chemincomp=$(echo "$repcourant\\$fichier")
+		fi
+		cheminmodif=$(echo $chemincomp | sed 's.\\.\\\\.g')
+		fichiermodif=$(echo $fichier | sed 's.\\.\\\\.g')
+		echo $chemincomp
+
+		#C'est grace à ça qu'on vérifie si le dossier existe
+		if grep -q "^directory $cheminmodif" $(pwd)/archive/$args ; then
+			present="ok"
+			echo "mkdir: cannot create directory $fichier: File exists"
+		else
+			echo "j'ai pas reussi a grep"
+
+			#On echange les valeurs de option et fichier si elles sont inversées
+			if [ "$fichier" = "-p" ];then
+				fichier=$option
+				option="-p"
+				if [[ "$repcourant" =~ \\$ ]];then
+				chemincomp=$(echo "$repcourant$fichier")
+				else
+					chemincomp=$(echo "$repcourant\\$fichier")
+				fi
+
+				#On crée le chemin que le grep va comprendre
+				cheminmodif=$(echo $chemincomp | sed 's.\\.\\\\.g')
+				fichiermodif=$(echo $fichier | sed 's.\\.\\\\.g')
+
+				
+
+			fi
+			
+
+				if [[ "$option" = "-p" ]] && [[ "$fichier" =~ \\+ ]] ;then
+
+					echo "je suis repcourant $repcourant"
+					repc=$(echo $repcourant | sed 's/\\/\\\\/g')
+					repc=$(grep -n "${repc}$" archive/$args | head -1 | cut -d':' -f1)
+					echo "et moi repc $repc"
+					sed -n "$repc,$ p" archive/$args > bouclels
+					while read ligne; do
+						if [ "$ligne" = "@" ]; then
+							finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
+							finli=$(echo "$(($finli+$repc))")
+							break
+						fi
+					done < bouclels
+
+					sortiewhile=0
+					echo "$cheminmodif chemin modif"
+					echo "$chemincomp chemin comp"
+					echo "$fichier fichier"
+
+					i=1
+					dernierdoss=$(echo $fichier | rev | cut -d'\\' -f 1 | rev)
+					while [[ "$sortiewhile" = 0 ]];
+					do
+						fichiercoup=$(echo $fichier | cut -d'\\' -f$i)
+						if [ "$fichiercoup" != "$dernierdoss" ];then
+							fichiercoup=$(echo $fichier | cut -d'\\' -f$i)
+							repc=$(echo $repcourant | sed 's/\\/\\\\/g')
+							repc=$(grep -n "${repc}$" archive/$args | head -1 | cut -d':' -f1)
+							sed -n "$repc,$ p" archive/$args > bouclels
+							while read ligne; do
+								if [ "$ligne" = "@" ]; then
+								finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
+								finli=$(echo "$(($finli+$repc))")
+								break
+								fi
+							done < bouclels
+							finli=$(($finli-2))
+							repc=$(($repc+1))
+							sed -n "$repc, $finli p" archive/$args | cut -d' ' -f1 > echols
+							verif=0
+							while read ligne; do
+									if [[ $ligne =~ ^${fichier}$ ]]; then
+										verif=1
+								fi
+							done < echols
+							rm bouclels
+							rm echols
+							echo "la fin de la liste est $finli"
+							echo $repc
+
+							#Il rajoute la ligne du dossier dans le repertoire père
+							sed -i "$repc i $fichier drwxrwxr-x 4096" archive/$args
+							((debutdos=$finli+2))
+
+
+							#Il crée la ligne du dossier avec les @
+							sed -i "$debutdos i @\ndirectory $cheminmodif" archive/$args
+
+							debutbody=$(head -1 archive/$args | cut -d':' -f2)
+							((debutbody=$debutbody+3))
+							
+							#Modification de la premiere ligne du fichier
+							sed -i "1s/.*/3:$debutbody/" archive/$args
+					else
+							sortiewhile=1
+							break
+					fi
+
+
+					
+					done
+							
+				#S'il n'y a pas d'option et que le fichier est un chemin 
+				elif [[ "$option" = "" ]] && [[ "$fichier" =~ \\+ ]];then
+					echo "mkdir: cannot create directory ‘$fichier’: No such file or directory"
+
+
+				#S'il n'ya pas d'options alors il crée le dossier normalement
+				elif [[ "$option" = "" ]];then
+					echo "option: $option ou fichier: $fichier"
+			
+					repc=$(echo $repcourant | sed 's/\\/\\\\/g')
+					repc=$(grep -n "${repc}$" archive/$args | head -1 | cut -d':' -f1)
+					sed -n "$repc,$ p" archive/$args > bouclels
+					while read ligne; do
+						if [ "$ligne" = "@" ]; then
+						finli=$(grep -n "${ligne}" bouclels| cut -d':' -f1 | head -1)
+						finli=$(echo "$(($finli+$repc))")
+						break
+						fi
+					done < bouclels
+					finli=$(($finli-2))
+					repc=$(($repc+1))
+					sed -n "$repc, $finli p" archive/$args | cut -d' ' -f1 > echols
+					verif=0
+					while read ligne; do
+							if [[ $ligne =~ ^${fichier}$ ]]; then
+								verif=1
+						fi
+					done < echols
+					rm bouclels
+					rm echols
+					echo "la fin de la liste est $finli"
+					echo $repc
+
+					#Il rajoute la ligne du dossier dans le repertoire père
+					sed -i "$repc i $fichier drwxrwxr-x 4096" archive/$args
+					((debutdos=$finli+2))
+
+
+					#Il crée la ligne du dossier avec les @
+					sed -i "$debutdos i @\ndirectory $cheminmodif" archive/$args
+
+					debutbody=$(head -1 archive/$args | cut -d':' -f2)
+					((debutbody=$debutbody+3))
+					
+					#Modification de la premiere ligne du fichier
+					sed -i "1s/.*/3:$debutbody/" archive/$args
+						
+				fi
+
+		fi 
+
+}
+
 accept-loop
