@@ -736,14 +736,12 @@ function commande-mkdir () {
 		fi
 		cheminmodif=$(echo $chemincomp | sed 's.\\.\\\\.g')
 		fichiermodif=$(echo $fichier | sed 's.\\.\\\\.g')
-		echo $chemincomp
 
 		#C'est grace à ça qu'on vérifie si le dossier existe
 		if grep -q "^directory $cheminmodif" $(pwd)/archive/$args ; then
 			present="ok"
 			echo "mkdir: cannot create directory $fichier: File exists"
 		else
-			echo "j'ai pas reussi a grep"
 
 			#On echange les valeurs de option et fichier si elles sont inversées
 			if [ "$fichier" = "-p" ];then
@@ -766,10 +764,8 @@ function commande-mkdir () {
 
 				if [[ "$option" = "-p" ]] && [[ "$fichier" =~ \\+ ]] ;then
 
-					echo "je suis repcourant $repcourant"
 					repc=$(echo $repcourant | sed 's/\\/\\\\/g')
 					repc=$(grep -n "${repc}$" archive/$args | head -1 | cut -d':' -f1)
-					echo "et moi repc $repc"
 					sed -n "$repc,$ p" archive/$args > bouclels
 					while read ligne; do
 						if [ "$ligne" = "@" ]; then
@@ -780,9 +776,6 @@ function commande-mkdir () {
 					done < bouclels
 
 					sortiewhile=0
-					echo "$cheminmodif chemin modif"
-					echo "$chemincomp chemin comp"
-					echo "$fichier fichier"
 
 					i=1
 					dernierdoss=$(echo $fichier | rev | cut -d'\\' -f 1 | rev)
@@ -812,8 +805,6 @@ function commande-mkdir () {
 							done < echols
 							rm bouclels
 							rm echols
-							echo "la fin de la liste est $finli"
-							echo $repc
 
 							#Il rajoute la ligne du dossier dans le repertoire père
 							sed -i "$repc i $fichier drwxrwxr-x 4096" archive/$args
@@ -867,8 +858,6 @@ function commande-mkdir () {
 					done < echols
 					rm bouclels
 					rm echols
-					echo "la fin de la liste est $finli"
-					echo $repc
 
 					#Il rajoute la ligne du dossier dans le repertoire père
 					sed -i "$repc i $fichier drwxrwxr-x 4096" archive/$args
