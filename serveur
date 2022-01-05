@@ -565,7 +565,7 @@ do
 						debsupbody=$(($debsupbody+$deb_body-1))
 						finsupbody=$(($finsupbody+$deb_body-1))
 						sed -i "$debsupbody, $finsupbody d" archive/$args
-						#rm supprm
+						rm supprm
 					fi
 						debrm=$(($debrm-1))
 						finli=$(($finli-1))
@@ -592,10 +592,13 @@ do
 						sed -i "$li d" archive/$args 
 					fi
 					deb_body=$(($lignesupp-1))
-					#rm supprm
+					rm supprm
 				fi
 				sed -i "1s/.*/3:$deb_body/" archive/$args
-				sed -n "1, $(($li-1)) p" archive/$args > majdebbody
+				li=$(echo $li | cut -d' ' -f1)
+				#echo $nli
+				nli=$(($li-1))
+				sed -n "1, $(($nli)) p" archive/$args > majdebbody
 				sed -i 's/\\/\\\\/g' majdebbody
 				while read ligne; do
 					set -- $ligne 
@@ -606,34 +609,31 @@ do
 				if [ -f "majrm" ]; then
 					lastdebbody=$(cat majrm | tail -1 | cut -d' ' -f1)
 					tailledebbody=$(cat majrm | tail -1 | cut -d' ' -f2)
-				#rm majrm
+				rm majrm
 				else
 					lastdebbody=1
 					tailledebbody=0
 				fi
-				echo "$lastdebbody est last, $tailledebbody est taille"
-				sed -n "$li,$(($deb_body-1)) p" archive/$args > majdebbody2
-				sed -i 's/\\/\\\\/g' majdebbody2
+				sed -n "$((nli+1)),$(($deb_body-1)) p" archive/$args > majdebbody
+				sed -i 's/\\/\\\\/g' majdebbody
 				while read ligne; do
 					set -- $ligne 
 						if [[ "$2" =~ ^[^d] && "$4" != "" ]]; then
 							nligne=$(grep -n "${ligne}$" archive/$args | head -1 | cut -d':' -f1)
-							echo "$nligne je suis la nligne"
 							if [[ "$tailledebbody" = "" || "$tailledebbody" = 0 ]]; then
-								echo "$4 je suis 4 et $lastdebbody et moi last"
-								#sed -i "${nligne}s/s/$lastdebbody/" archive/$args
-								#sed -i "s/^\(.+ \{3\}\) [0-9]/$lastdebbody/" archive/$args
+								#sed -i "${nligne}s/$4/$lastdebbody/" archive/$args
+								sed -i "s/^\(.+ \{3\}\) ${4}/$lastdebbody/" archive/$args
 							else
 								lastdebbody=$(($lastdebbody+$tailledebbody))
-								#sed -i "${nligne}s/$4/$lastdebbody/" archive/$args
-								sed -i "s/^\(.+ \{3\}\) [0-9]/$lastdebbody/" archive/$args
+								sed -i "s/^\(.+ \{3\}\) ${4}/$lastdebbody/" archive/$args
+								#sed -i "s/^\(.+ \{3\}\) [0-9]/$lastdebbody/" archive/$args
 
 							fi
 							tailledebbody=$(echo $5)
 						fi
-				done < majdebbody2
-				#rm majdebbody
-				#rm suppbody
+				done < majdebbody
+				rm majdebbody
+				rm suppbody
 				break
 			else
 				echo "rm: cannot remove '$fichierrm': No such file or directory"
