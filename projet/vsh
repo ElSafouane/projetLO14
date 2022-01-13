@@ -27,7 +27,7 @@ else
 
 
 		ls -Rl > listeFich #Le fichier listeFich est le fichier sur lequel on boucle pour afficher l'archive
-			echo "Directory: $(pwd)" >> temp_header # on initialise la première ligne de notre header avant la boucle
+			echo "directory $(pwd)\\" >> temp_header # on initialise la première ligne de notre header avant la boucle
 			j=0
 			bodydeb=1 #variable qui sert à repérer le début du fichier dans le body
 			taille=0 
@@ -60,7 +60,7 @@ else
 					((j++))
 					nomDirectory[$j]=$(echo $ligne | cut -f2 -d'.' | sed 's/://') #on récupère le nom de se dossier
 					echo "@" >> temp_header #marquage de changement de dossier
-					echo "Directory: $(pwd)${nomDirectory[$j]}" >> temp_header #donc on affiche le nom du répertoire et son fullpath
+					echo "directory $(pwd)${nomDirectory[$j]}" >> temp_header #donc on affiche le nom du répertoire et son fullpath
 					current=$(pwd)${nomDirectory[$j]} #on actualise le dossier dans lequel on se trouve ce qui va permettre de cat les fichiers de se dossier
 				fi
 
@@ -75,7 +75,7 @@ else
 			echo "" >> $ARCHIVE
 			sed -i 's/\//\\/g' temp_header #on remplace tous les '/' par des '\'
 			cat temp_header >> $ARCHIVE
-			echo "FIN DU HEEEAAADDEEERRRR" >> $ARCHIVE
+			echo "@" >> $ARCHIVE
 			cat temp_body >> $ARCHIVE
 		echo ${mode:1} $ARCHIVE $(cat temp_header) | nc -w1 $NOM_SERV $PORT
 			rm temp_body
@@ -115,10 +115,9 @@ else
 				fi
 				set -- $ligne
 
-					if [[ $ligne =~ ^"Directory"+ ]];then #Si c'est un directory alors on créé le dossier chez le client
+					if [[ $ligne =~ ^"directory"+ ]];then #Si c'est un directory alors on créé le dossier chez le client
 						mkdir -p $repCourant/$ARCHIVE/$2
 						cd $repCourant/$ARCHIVE/$2
-						#echo "je suis dans le directory $2"
 
 						j=0
 						while read line #Pour chaque dossier je créé les fichiers dedans
@@ -141,8 +140,6 @@ else
 									if [[ $(echo $2 | cut -c3) = "w" ]];then
 
 										wu=2
-										echo "Pour $1 $2 en position 3 on a "
-										echo $2 | cut -c3
 									else
 
 										wu=0
@@ -198,7 +195,6 @@ else
 									fi
 									((o=ro+wo+xo))
 									
-									echo "chmod $u$g$o $1"
 									chmod $u$g$o $1 
 
 								elif [[ $(echo $2 | cut -c1) = "-" ]];then
@@ -221,8 +217,6 @@ else
 									if [[ $(echo $2 | cut -c3) = "w" ]];then
 
 										wu=2
-										echo "Pour $1 $2 en position 3 on a "
-										echo $2 | cut -c3
 									else
 
 										wu=0
@@ -278,7 +272,6 @@ else
 									fi
 									((o=ro+wo+xo))
 									
-									echo "chmod $u$g$o $1"
 									chmod $u$g$o $1 
 								
 								fi
